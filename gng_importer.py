@@ -24,10 +24,12 @@
 from qgis.PyQt.QtCore import QLocale, QTranslator, QCoreApplication
 from qgis.core import QgsSettings
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog, QMessageBox
+from .importer.file_parser import detect_icao_and_type, parse_point_file
+from .importer.project_manager import get_fir, ensure_layer_exists, detect_project_fir
+from .importer.point_importer import import_points
 
 # Import the code for the dialog
-from .gng_importer_dialog import GNGImporterDialog
 import os.path
 
 
@@ -182,18 +184,47 @@ class GNGImporter:
     def run(self):
         """Run method that performs all the real work"""
 
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = GNGImporterDialog()
+        # Ask for file
+        path, _ = QFileDialog.getOpenFileName(
+            self.iface.mainWindow(),
+            "Select GNG File",
+            "",
+            "Text Files (*.txt)"
+        )
+        if not path:
+            return
 
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+        # Detect ICAO + type
+        icao, type_ = detect_icao_and_type(path)
+        fir = get_fir(icao)
+
+        project_fir = detect_project_fir()
+        print("DEBUG: Project FIR =", project_fir)
+        print("DEBUG: File FIR =", fir)
+
+        if project_fir is None:
+            QMessageBox.critical(None, "GNG Importer",
+                                "This project does not contain any FIR root group.\n"
+                                "You must open an AVISO FIR project before importing.")
+            return
+
+        if project_fir != fir:
+            QMessageBox.critical(None, "GNG Importer",
+                                f"FIR mismatch:\n\n"
+                                f"Project FIR: {project_fir}\n"
+                                f"File FIR: {fir}\n\n"
+                                "You cannot import a file from a different FIR.")
+            return        
+
+        # POINT IMPORT (Gate, Taxiway)
+        if "Gate" in type_ or "Taxiway" in type_:
+            points = parse_point_file(path)
+
+            freetext_layer = ensure_layer_exists(fir, icao, "FREETEXT")
+
+            import_points(points, freetext_layer, fir, icao, type_.lower())
+
+            self.iface.messageBar().pushSuccess(
+                "GNG Importer",
+                f"Imported {len(points)} points into {freetext_layer.name()}"
+            )
