@@ -1,0 +1,4 @@
+plugin_path: .
+project_slug: qgis-gngimporter
+github_organization_slug: ZeFlyingGnome
+timezone: Europe/Paris
