@@ -1,4 +1,4 @@
-name: Build QGIS Plugin ZIP
+name: Auto Release QGIS Plugin
 
 on:
   push:
@@ -6,39 +6,48 @@ on:
       - main
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate plugin structure
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Bump version
+        id: bump
         run: |
-          echo "Checking plugin structure..."
-          test -f metadata.txt || (echo "ERROR: metadata.txt missing" && exit 1)
-          test -f __init__.py || (echo "ERROR: __init__.py missing" && exit 1)
-          echo "Structure OK"
+          python scripts/bump_version.py > new_version.txt
+          echo "version=$(cat new_version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Commit bumped version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add metadata.txt
+          git commit -m "Bump version to ${{ steps.bump.outputs.version }}"
+          git push
 
       - name: Install qgis-plugin-ci
         run: pip install qgis-plugin-ci
 
-      - name: Validate plugin with qgis-plugin-ci
-        run: qgis-plugin-ci check
-
-      - name: Build ZIP
+      - name: Validate and package plugin
+        id: package
         run: |
-          PLUGIN_NAME=$(basename $GITHUB_REPOSITORY)
-          ZIP_NAME="${PLUGIN_NAME}.zip"
-          echo "Building ${ZIP_NAME}..."
-          mkdir build
-          cp -r * build/
-          cd build
-          zip -r "../${ZIP_NAME}" .
-          cd ..
+          qgis-plugin-ci package
+          # qgis-plugin-ci outputs the ZIP in ./build/
+          ZIP_FILE=$(ls build/*.zip)
+          echo "zip_file=${ZIP_FILE}" >> $GITHUB_OUTPUT
 
-      - name: Upload ZIP artifact
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: qgis-plugin-zip
-          path: "*.zip"
+          tag_name: v${{ steps.bump.outputs.version }}
+          name: Release ${{ steps.bump.outputs.version }}
+          files: ${{ steps.package.outputs.zip_file }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
