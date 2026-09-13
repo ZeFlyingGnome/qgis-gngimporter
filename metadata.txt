@@ -6,7 +6,7 @@
 name=GNG Importer
 qgisMinimumVersion=3.0
 description=Import Data from GNG
-version=0.2
+version=0.3
 author=ZeFlyingGnome
 email=empty@emty.org
 
