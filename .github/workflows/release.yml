@@ -1,5 +1,8 @@
 name: Auto Release QGIS Plugin
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -11,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -39,12 +42,11 @@ jobs:
         id: package
         run: |
           qgis-plugin-ci package
-          # qgis-plugin-ci outputs the ZIP in ./build/
           ZIP_FILE=$(ls build/*.zip)
           echo "zip_file=${ZIP_FILE}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.bump.outputs.version }}
           name: Release ${{ steps.bump.outputs.version }}
