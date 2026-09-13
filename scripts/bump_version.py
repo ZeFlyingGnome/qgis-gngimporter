@@ -1,6 +1,6 @@
 import re
 
-path = "metadata.txt"
+path = "qgis_gngimporter/metadata.txt"
 
 with open(path, "r", encoding="utf-8") as f:
     content = f.read()
