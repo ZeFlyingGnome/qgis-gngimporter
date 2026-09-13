@@ -1,0 +1,44 @@
+name: Build QGIS Plugin ZIP
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate plugin structure
+        run: |
+          echo "Checking plugin structure..."
+          test -f metadata.txt || (echo "ERROR: metadata.txt missing" && exit 1)
+          test -f __init__.py || (echo "ERROR: __init__.py missing" && exit 1)
+          echo "Structure OK"
+
+      - name: Install qgis-plugin-ci
+        run: pip install qgis-plugin-ci
+
+      - name: Validate plugin with qgis-plugin-ci
+        run: qgis-plugin-ci check
+
+      - name: Build ZIP
+        run: |
+          PLUGIN_NAME=$(basename $GITHUB_REPOSITORY)
+          ZIP_NAME="${PLUGIN_NAME}.zip"
+          echo "Building ${ZIP_NAME}..."
+          mkdir build
+          cp -r * build/
+          cd build
+          zip -r "../${ZIP_NAME}" .
+          cd ..
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qgis-plugin-zip
+          path: "*.zip"
