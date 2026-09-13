@@ -60,3 +60,86 @@ def parse_point_file(path):
             })
 
     return points
+
+def parse_line_file(path):
+    """
+    Parse Groundlayout AVISO line file.
+    Returns list of segments:
+    [
+        {
+            "p1": (lat, lon),
+            "p2": (lat, lon),
+            "color": "COLOR_Taxiway"
+        },
+        ...
+    ]
+    """
+    segments = []
+
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            lat1_txt, lon1_txt, lat2_txt, lon2_txt, color = line.split()
+
+            p1 = (parse_coord(lat1_txt), parse_coord(lon1_txt))
+            p2 = (parse_coord(lat2_txt), parse_coord(lon2_txt))
+
+            segments.append({
+                "p1": p1,
+                "p2": p2,
+                "color": color
+            })
+
+    return segments
+
+def group_segments(segments):
+    """
+    Group segments into polyline features.
+    Returns list of grouped features:
+    [
+        {
+            "color": "COLOR_Taxiway",
+            "points": [(lat, lon), (lat, lon), ...]
+        },
+        ...
+    ]
+    """
+
+    features = []
+    current = None
+
+    for seg in segments:
+        p1 = seg["p1"]
+        p2 = seg["p2"]
+        color = seg["color"]
+
+        if current is None:
+            # start new feature
+            current = {
+                "color": color,
+                "points": [p1, p2]
+            }
+            continue
+
+        last_point = current["points"][-1]
+
+        # continuation condition
+        if color == current["color"] and p1 == last_point:
+            current["points"].append(p2)
+        else:
+            # finish previous feature
+            features.append(current)
+            # start new one
+            current = {
+                "color": color,
+                "points": [p1, p2]
+            }
+
+    # add last feature
+    if current is not None:
+        features.append(current)
+
+    return features

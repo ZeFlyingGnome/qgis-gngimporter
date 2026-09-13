@@ -25,9 +25,9 @@ from qgis.PyQt.QtCore import QLocale, QTranslator, QCoreApplication
 from qgis.core import QgsSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QMessageBox
-from .importer.file_parser import detect_icao_and_type, parse_point_file
+from .importer.file_parser import detect_icao_and_type, parse_point_file, parse_line_file, group_segments
 from .importer.project_manager import get_fir, ensure_layer_exists, detect_project_fir
-from .importer.point_importer import import_points
+from .importer.importer import import_points, import_lines
 
 # Import the code for the dialog
 import os.path
@@ -216,6 +216,9 @@ class GNGImporter:
                                 "You cannot import a file from a different FIR.")
             return        
 
+        print(f"DEBUG: Detected icao={icao}, type_={type_}")
+        print("DEBUG RAW TYPE repr:", repr(type_))
+
         # POINT IMPORT (Gate, Taxiway)
         if "Gate" in type_ or "Taxiway" in type_:
             points = parse_point_file(path)
@@ -228,3 +231,21 @@ class GNGImporter:
                 "GNG Importer",
                 f"Imported {len(points)} points into {freetext_layer.name()}"
             )
+        # LINE IMPORT (Groundlayout AVISO)
+        elif "Groundlayout" in type_:
+            segments = parse_line_file(path)
+            features = group_segments(segments)
+
+            geo_layer = ensure_layer_exists(fir, icao, "GEO")
+
+            import_lines(features, geo_layer, fir, icao)
+
+            self.iface.messageBar().pushSuccess(
+                "GNG Importer",
+                f"Imported {len(features)} line features into {geo_layer.name()}"
+            )
+        else:
+            QMessageBox.critical(None, "GNG Importer",
+                                f"Unknown file type: {type_}\n\n"
+                                "This plugin only supports Gate, Taxiway, and GroundLayout files.")
+            return
