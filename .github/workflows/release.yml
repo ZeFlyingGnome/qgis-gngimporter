@@ -31,7 +31,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add metadata.txt
+          git add qgis_gngimporter/metadata.txt
           git commit -m "Bump version to ${{ steps.bump.outputs.version }}"
           git push
 
@@ -42,7 +42,7 @@ jobs:
         id: package
         run: |
           qgis-plugin-ci package ${{ steps.bump.outputs.version }}
-          ZIP_FILE=$(ls build/*.zip)
+          ZIP_FILE=$(ls *.zip)
           echo "zip_file=${ZIP_FILE}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
