@@ -41,7 +41,7 @@ jobs:
       - name: Validate and package plugin
         id: package
         run: |
-          qgis-plugin-ci package
+          qgis-plugin-ci package ${{ steps.bump.outputs.version }}
           ZIP_FILE=$(ls build/*.zip)
           echo "zip_file=${ZIP_FILE}" >> $GITHUB_OUTPUT
 
