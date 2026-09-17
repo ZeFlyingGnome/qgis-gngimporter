@@ -25,9 +25,9 @@ from qgis.PyQt.QtCore import QLocale, QTranslator, QCoreApplication
 from qgis.core import QgsSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QFileDialog, QMessageBox
-from .importer.file_parser import detect_icao_and_type, parse_point_file, parse_line_file, group_segments
+from .importer.file_parser import detect_icao_and_type, parse_point_file, parse_line_file, group_segments, parse_surface_file
 from .importer.project_manager import get_fir, ensure_layer_exists, detect_project_fir
-from .importer.importer import import_points, import_lines
+from .importer.importer import import_points, import_lines, import_surfaces
 
 # Import the code for the dialog
 import os.path
@@ -199,8 +199,6 @@ class GNGImporter:
         fir = get_fir(icao)
 
         project_fir = detect_project_fir()
-        print("DEBUG: Project FIR =", project_fir)
-        print("DEBUG: File FIR =", fir)
 
         if project_fir is None:
             QMessageBox.critical(None, "GNG Importer",
@@ -215,9 +213,6 @@ class GNGImporter:
                                 f"File FIR: {fir}\n\n"
                                 "You cannot import a file from a different FIR.")
             return        
-
-        print(f"DEBUG: Detected icao={icao}, type_={type_}")
-        print("DEBUG RAW TYPE repr:", repr(type_))
 
         # POINT IMPORT (Gate, Taxiway)
         if "Gate" in type_ or "Taxiway" in type_:
@@ -244,8 +239,19 @@ class GNGImporter:
                 "GNG Importer",
                 f"Imported {len(features)} line features into {geo_layer.name()}"
             )
+        elif "AVISO" in type_:
+            surfaces = parse_surface_file(path)
+
+            region_layer = ensure_layer_exists(fir, icao, "REGIONS")
+
+            import_surfaces(surfaces, region_layer, fir, icao)
+          
+            self.iface.messageBar().pushSuccess(
+                "GNG Importer",
+                f"Imported {len(surfaces)} surface features into {region_layer.name()}"
+            )
         else:
             QMessageBox.critical(None, "GNG Importer",
                                 f"Unknown file type: {type_}\n\n"
-                                "This plugin only supports Gate, Taxiway, and GroundLayout files.")
+                                "This plugin only supports Gate, Taxiway, GroundLayout and AVISO files.")
             return

@@ -143,3 +143,50 @@ def group_segments(segments):
         features.append(current)
 
     return features
+
+def parse_surface_file(path):
+    surfaces = []
+    current_color = None
+    current_coords = []
+
+    with open(path, "r", encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
+
+            # Blank line → end of block
+            if not line:
+                if current_color and current_coords:
+                    surfaces.append({
+                        "color": current_color,
+                        "coords": current_coords
+                    })
+                current_color = None
+                current_coords = []
+                continue
+
+            # New block header
+            if line.startswith("COLOR_"):
+                if current_color and current_coords:
+                    surfaces.append({
+                        "color": current_color,
+                        "coords": current_coords
+                    })
+                current_color = line
+                current_coords = []
+                continue
+
+            # Coordinate line
+            if current_color:
+                lat_txt, lon_txt = line.split()
+                lat = parse_coord(lat_txt)
+                lon = parse_coord(lon_txt)
+                current_coords.append((lat, lon))
+
+        # Flush last block at EOF
+        if current_color and current_coords:
+            surfaces.append({
+                "color": current_color,
+                "coords": current_coords
+            })
+
+    return surfaces
