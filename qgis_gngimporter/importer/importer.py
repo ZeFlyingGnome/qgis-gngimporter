@@ -2,22 +2,21 @@ from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from qgis.PyQt.QtWidgets import QMessageBox
 
 LINE_TYPE_MAP = {
-    "COLOR_Taxiway": "twy_centerline",
-    "COLOR_TaxiwayOrange": "orange",
+    "COLOR_Taxiway": "gate_centerline",
     "COLOR_TaxiwayBlue": "blue",
+    "COLOR_TaxiwayOrange": "orange",
 }
 
 SURFACE_TYPE_MAP = {
-    "COLOR_HardSurface4": "background",
-    "COLOR_HardSurface2": "taxiway",
-    "COLOR_RunwayConcrete": "runway",
+    "COLOR_Building": "building",
     "COLOR_GrasSurface": "grass",
-    "COLOR_HardSurface4": "grass_taxiway",
+    "COLOR_HardSurface2": "taxiway",
+    "COLOR_HardSurface3": "apron",
+    "COLOR_HardSurface4": "unused",
+    "COLOR_RunwayConcrete": "runway",
     "COLOR_RunwayGrass": "grass_runway",
     "COLOR_Stopbar": "cati",
     "COLOR_TaxiwayOrange": "catiii",
-    "COLOR_HardSurface3": "apron",
-    "COLOR_Building": "building",
 }
 
 def import_points(points, layer, fir, icao, type_):
