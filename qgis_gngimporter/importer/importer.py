@@ -115,6 +115,7 @@ def import_surfaces(surfaces, layer, fir, icao):
 
         feat["fir"] = fir
         feat["icao"] = icao
+        feat["author"] = "GNGImporter"
 
         layer.addFeature(feat)
 
