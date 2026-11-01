@@ -214,10 +214,10 @@ def ensure_layer_exists(fir, icao, layer_type):
     icao_idx = layer.fields().indexFromName("icao")
 
     if fir_idx != -1:
-        layer.setDefaultValueDefinition(fir_idx, QgsDefaultValue(fir))
+        layer.setDefaultValueDefinition(fir_idx, QgsDefaultValue(f"'{fir}'"))
 
     if icao_idx != -1:
-        layer.setDefaultValueDefinition(icao_idx, QgsDefaultValue(icao))
+        layer.setDefaultValueDefinition(icao_idx, QgsDefaultValue(f"'{icao}'"))
 
     QgsProject.instance().addMapLayer(layer, False)
     group.addLayer(layer)
