@@ -2,7 +2,7 @@ from qgis.core import QgsFeature, QgsGeometry, QgsPointXY
 from qgis.PyQt.QtWidgets import QMessageBox
 
 LINE_TYPE_MAP = {
-    "COLOR_Taxiway": "twy_centerline",
+    "COLOR_Taxiway": "gate_centerline",
     "COLOR_TaxiwayBlue": "blue",
     "COLOR_TaxiwayOrange": "orange",
 }
