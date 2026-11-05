@@ -184,15 +184,22 @@ class GNGImporter:
     def run(self):
         """Run method that performs all the real work"""
 
+        # Retrieve last used directory from QGIS settings, default to empty string if not set
+        settings = QgsSettings()
+        last_dir = settings.value("GNGImporter/last_dir", "")
+
         # Ask for file
         path, _ = QFileDialog.getOpenFileName(
             self.iface.mainWindow(),
             "Select GNG File",
-            "",
+            last_dir,
             "Text Files (*.txt)"
         )
         if not path:
             return
+
+        # Save the directory for next time
+        settings.setValue("GNGImporter/last_dir", os.path.dirname(path))
 
         # Detect ICAO + type
         icao, type_ = detect_icao_and_type(path)
